@@ -10,7 +10,7 @@ import (
 	"github.com/Autherain/go_cyber/environment"
 	"github.com/Autherain/go_cyber/internal/health"
 	"github.com/Autherain/go_cyber/internal/logger"
-	"github.com/Autherain/go_cyber/server"
+	"github.com/Autherain/go_cyber/pkg/server"
 	"github.com/jirenius/go-res"
 )
 
