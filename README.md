@@ -30,7 +30,6 @@
 
 Cette approche conserve la vie privée par design tout en utilisant les capacités temps-réel de NATS. Les données sensibles ne transitent jamais en clair et le serveur reste aveugle aux contenus.
 
-Voici une proposition de schéma SQLite pour votre application de chat éphémère :
 
 ```sql
 PRAGMA foreign_keys = ON;

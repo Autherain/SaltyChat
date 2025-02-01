@@ -14,6 +14,32 @@ services:
       - ./var/data/jetstream/:/data/jetstream/
       - /var/run/nats/
 
+  traefik:
+    image: traefik:v2.10
+    container_name: traefik
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      # Enable self-signed certificates for local development
+      - "--certificatesresolvers.myresolver.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
+      - "--certificatesresolvers.myresolver.acme.httpchallenge=true"
+      - "--certificatesresolvers.myresolver.acme.httpchallenge.entrypoint=web"
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8081:8080" # Dashboard port
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dashboard.rule=Host(`traefik.localhost`)"
+      - "traefik.http.routers.dashboard.service=api@internal"
+      - "traefik.http.routers.dashboard.entrypoints=websecure"
+      - "traefik.http.routers.dashboard.tls=true"
+
   gateway:
     image: resgateio/resgate
     platform: linux/amd64
@@ -40,6 +66,27 @@ services:
       - nats
       - traefik
 
+  api.db:
+    image: postgres:13-alpine
+    container_name: db
+    environment:
+      POSTGRES_DB: api
+      POSTGRES_PASSWORD: api
+      POSTGRES_USER: api
+    healthcheck:
+      interval: 5s
+      test:
+        - CMD-SHELL
+        - pg_isready
+        - -d
+        - api
+    ports:
+      - 5432:5432
+    restart: on-failure
+    volumes:
+      - ./services/api/test/data/entities.sql:/var/lib/postgresql/test/data/entities.sql:ro
+      - ./var/data/api/:/var/lib/postgresql/data/
+
   api.server:
     build:
       context: ./services/api
@@ -64,3 +111,16 @@ services:
       - nats
       - gateway
       - traefik
+
+  api.migrate:
+    image: migrate/migrate
+    working_dir: /migrations
+    volumes:
+      - ./services/api/migrations:/migrations
+    depends_on:
+      api.db:
+        condition: service_healthy
+    entrypoint:
+      - "sh"
+      - "-c"
+      - "migrate -database=postgres://api:api@api.db:5432/api?sslmode=disable -path=/migrations/ up"
