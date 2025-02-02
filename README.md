@@ -1,76 +1,87 @@
-1. **Génération de Room**
-- Création d'une URL unique avec :
-  - *Identifiant de room* : UUID v4 (ex: `/room/9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d`)
-  - *Clé de chiffrement* : Dans le fragment URL (après `#`) invisible côté serveur
+Je vais restructurer le README pour intégrer les précisions et le nouveau schéma SQL. Voici la proposition révisée :
 
-3. **Chiffrement End-to-End**
-- Mécanisme client-side :
+---
+
+# Secure Real-time Chat - Architecture Technique
+
+## 1. Génération de Room
+- **URL unique** composée de :
+  - `UUID v4` comme identifiant (ex: `/room/9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d`)
+  - **Clé de chiffrement** stockée dans le fragment URL (partie après `#`), invisible côté serveur
+- **Accès éphémère** : Le lien devient inutilisable après fermeture de tous les onglets clients
+
+## 2. Chiffrement End-to-End
+- **Mécanisme client-side** :
   - AES-GCM avec clé dérivée du fragment URL
-  - Nonces générés côté client pour chaque message
-- Le serveur ne manipule que des payloads binaires chiffrés
+  - Nonces uniques (12 bytes) générés à chaque message
+- **Zero-knowledge serveur** :
+  - Le serveur manipule exclusivement des blobs binaires (`encrypted_content` + `nonce`)
+  - Aucune exposition des métadonnées utilisateur
 
-4. **Gestion des Connexions**
-- Vie éphémère des rooms :
-  - La room persiste tant qu'au moins 1 client connecté
-  - Nettoyage automatique par Resgate après dernier disconnect
-- La personne ne peut pas ré-utiliser le lien qu'on lui a envoyé pour accéder au chat et discuter. Cela ne dure que temps l'onglet n'est pas fermé. 
-- Session utilisateur :
-  - Identifiée par le WebSocket ouvert
-  - Fermeture = suppression immédiate de la liste des participants
+## 3. Gestion des Connexions
+- **Cycle de vie des rooms** :
+  - Activée au premier client connecté via Resgate
+  - Désactivée automatiquement après dernier `WebSocket disconnect`
+  - Données historiques conservées en base (hors clé de chiffrement)
+- **Sessions utilisateurs** :
+  - Identifiées par la connexion WebSocket active
+  - Détection instantanée des déconnexions (participants visibles en temps réel)
 
-5. **Flux de Données**
-- Client A envoie message → Chiffrement → Publie sur `room.{id}.messages`
-- NATS diffuse à tous les subscribers → Déchiffrement côté clients B, C...
+## 4. Flux de Données
+1. Client A → Chiffre message + génère nonce
+2. Publication sur la ressource NATS `room.{id}.messages`
+3. Resgate diffuse à tous les subscribers de la room
+4. Clients B/C → Déchiffrement via la clé locale
 
-6. **Frontend Minimaliste**
-- Éléments clés :
-  - Lecture dynamique du fragment URL pour la clé
-  - Connexion WebSocket auto-init à l'ouverture
-  - Destruction des clés en mémoire à l'`onbeforeunload`
+## 5. Frontend Minimaliste
+- **Fonctionnalités clés** :
+  - Lecture dynamique du fragment URL pour l'initialisation
+  - Abonnement automatique à `room.{id}.messages` via Resgate
+  - Purge mémoire des clés sur événement `beforeunload`
+  - UI reactive avec masquage des messages après déconnexion
 
-Cette approche conserve la vie privée par design tout en utilisant les capacités temps-réel de NATS. Les données sensibles ne transitent jamais en clair et le serveur reste aveugle aux contenus.
-
-
+## 6. Schéma de Base de Données (PostgreSQL)
 ```sql
-PRAGMA foreign_keys = ON;
-
+-- Table des salles (metadata seulement)
 CREATE TABLE rooms (
-    id TEXT PRIMARY KEY,          -- UUID v4
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    id UUID PRIMARY KEY,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    last_activity TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, -- Dernière interaction
+    is_active BOOLEAN DEFAULT TRUE -- État géré par Resgate
 );
 
+-- Table des messages chiffrés
 CREATE TABLE messages (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    room_id TEXT NOT NULL,
-    encrypted_content BLOB NOT NULL,  -- Données chiffrées (AES-GCM)
-    nonce BLOB NOT NULL,              -- Valeur aléatoire (12 bytes pour AES-GCM)
-    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-
-    FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE CASCADE
+    id UUID PRIMARY KEY,
+    room_id UUID NOT NULL REFERENCES rooms(id) ON DELETE CASCADE,
+    encrypted_content BYTEA NOT NULL, -- Payload chiffré
+    nonce BYTEA NOT NULL CHECK (octet_length(nonce) = 12), -- 96 bits pour AES-GCM
+    timestamp TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Index d'optimisation
 CREATE INDEX idx_messages_room ON messages(room_id);
 CREATE INDEX idx_messages_timestamp ON messages(timestamp);
 ```
 
-Explications :
+**Explications techniques** :
+- **Sécurité renforcée** :
+  - Les colonnes sensibles utilisent des types binaires natifs (`BYTEA`)
+  - Contraintes de taille strictes pour les nonces
+  - Cascade de suppression pour l'archivage automatique
+- **Performances** :
+  - Indexation ciblée sur les requêtes temporelles et par room
+  - Séparation metadata/payload pour l'optimisation stockage
+- **Audit** :
+  - Horodatage UTC avec précision microseconde (`TIMESTAMPTZ`)
+  - Trace d'activité via `last_activity`
 
-1. **Table `rooms`** :
-- Stocke l'UUID unique de chaque room
-- `created_at` pour audit (optionnel)
-- Suppression automatique des messages liés via le `ON DELETE CASCADE`
+## 7. Architecture Serveur
+- **Resgate** : Gère les subscriptions temps-réel et le cycle de vie des rooms
+- **NATS** : Bus de messages pour la diffusion globale
+- **Base de données** : Stockage persistant des messages chiffrés (hors clé)
 
-2. **Table `messages`** :
-- `encrypted_content` : Message chiffré (format binaire)
-- `nonce` : Vecteur d'initialisation pour AES-GCM
-- Les métadonnées utilisateur (username) sont incluses dans le payload chiffré
-- Indexation sur `room_id` pour les requêtes par salle
-
-3. **Sécurité** :
-- Aucune donnée sensible en clair
-- La clé de chiffrement reste dans le fragment URL (jamais stockée)
-- Les nonces sont uniques par message
-
-4. **Gestion de la durée de vie** :
-- Les rooms/messages sont automatiquement nettoyés par SQLite via les contraintes de clé étrangère
-- La suppression d'une room entraîne la suppression de tous ses messages
+Cette architecture garantit :
+- 🔒 **Confidentialité** par chiffrement client-to-client
+- ⚡ **Réactivité** grâce au stack NATS/Resgate
+- 🧹 **Auto-nettoyage** des ressources inactives
