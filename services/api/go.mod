@@ -7,6 +7,7 @@ require (
 	github.com/friendsofgo/errors v0.9.2
 	github.com/jirenius/go-res v0.5.1
 	github.com/joho/godotenv v1.5.1
+	github.com/lib/pq v1.10.6
 	github.com/nats-io/nats.go v1.38.0
 	github.com/volatiletech/null/v8 v8.1.2
 	github.com/volatiletech/sqlboiler/v4 v4.18.0

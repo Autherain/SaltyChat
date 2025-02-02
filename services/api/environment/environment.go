@@ -1,6 +1,7 @@
 package environment
 
 import (
+	"database/sql"
 	"fmt"
 	"log/slog"
 	"os"
@@ -34,6 +35,14 @@ type Variables struct {
 	HealthCheckTimeout     time.Duration `env:"APP_HEALTH_CHECK_TIMEOUT" envDefault:"5s"`
 	HealthCheckSubject     string        `env:"APP_HEALTH_CHECK_SUBJECT" envDefault:"health"`
 	HealthCheckStatusTopic string        `env:"APP_HEALTH_CHECK_STATUS_TOPIC" envDefault:"health.status"`
+
+	// PostgreSQL Configuration
+	PGHost     string `env:"APP_PG_HOST" envDefault:"localhost"`
+	PGPort     int    `env:"APP_PG_PORT" envDefault:"5432"`
+	PGUser     string `env:"APP_PG_USER" envDefault:"api"`
+	PGPassword string `env:"APP_PG_PASSWORD" envDefault:"api"`
+	PGDatabase string `env:"APP_PG_DATABASE" envDefault:"api"`
+	PGSSLMode  string `env:"APP_PG_SSL_MODE" envDefault:"disable"`
 
 	// Version Information
 	Env string `env:"APP_ENV" envDefault:"development"`
@@ -76,4 +85,27 @@ func MustInitNATSConn(variables *Variables) *nats.Conn {
 	}
 
 	return conn
+}
+
+func MustInitPGSQLDB(variables *Variables) *sql.DB {
+	connStr := fmt.Sprintf(
+		"host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
+		variables.PGHost,
+		variables.PGPort,
+		variables.PGUser,
+		variables.PGPassword,
+		variables.PGDatabase,
+		variables.PGSSLMode,
+	)
+	db, err := sql.Open("postgres", connStr)
+	if err != nil {
+		panic(fmt.Errorf("could not connect to PGSQL DB: %w", err))
+	}
+
+	// Vérification basique de la connexion
+	if err = db.Ping(); err != nil {
+		panic(fmt.Errorf("ping failure PGSQL DB: %w", err))
+	}
+
+	return db
 }

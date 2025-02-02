@@ -7,6 +7,7 @@ import (
 
 	"github.com/Autherain/go_cyber/internal/health"
 	"github.com/Autherain/go_cyber/internal/logger"
+	"github.com/Autherain/go_cyber/store"
 	"github.com/jirenius/go-res"
 	"github.com/nats-io/nats.go"
 )
@@ -17,6 +18,8 @@ type Server struct {
 	healthChecker   *health.HealthChecker
 	wg              sync.WaitGroup
 	shutdownTimeout time.Duration
+
+	store *store.Store
 }
 
 type Option func(*Server)
@@ -67,6 +70,12 @@ func WithHealthChecker(healthChecker *health.HealthChecker) Option {
 func WithShutdownTimeout(timeout time.Duration) Option {
 	return func(s *Server) {
 		s.shutdownTimeout = timeout
+	}
+}
+
+func WithStore(store *store.Store) Option {
+	return func(s *Server) {
+		s.store = store
 	}
 }
 

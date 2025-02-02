@@ -11,7 +11,10 @@ import (
 	"github.com/Autherain/go_cyber/internal/health"
 	"github.com/Autherain/go_cyber/internal/logger"
 	"github.com/Autherain/go_cyber/pkg/server"
+	"github.com/Autherain/go_cyber/store"
 	"github.com/jirenius/go-res"
+
+	_ "github.com/lib/pq"
 )
 
 const serviceName = "api"
@@ -49,12 +52,16 @@ func main() {
 		health.WithServiceName(serviceName),
 	)
 
+	dbConn := environment.MustInitPGSQLDB(variables)
+	store := store.NewStore(store.WithDB(dbConn))
+
 	// Create server with all dependencies
 	srv := server.New(
 		server.WithService(service),
 		server.WithLogger(log),
 		server.WithHealthChecker(healthChecker),
 		server.WithShutdownTimeout(variables.ShutdownTimeout),
+		server.WithStore(store),
 	)
 
 	// Setup context with cancellation

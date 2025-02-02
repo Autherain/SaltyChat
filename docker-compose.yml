@@ -6,9 +6,6 @@ services:
       - "-DVV"
       - "--config"
       - "/etc/nats-config/nats.conf"
-    ports:
-      - 4222:4222
-      - 8222:8222
     volumes:
       - ./services/nats/nats.conf:/etc/nats-config/nats.conf:ro
       - ./var/data/jetstream/:/data/jetstream/
@@ -48,8 +45,6 @@ services:
       - --debug
       - --nats=nats://nats:4222
       - --DV
-    ports:
-      - 8880:8080
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.gateway.entrypoints=websecure"
@@ -80,8 +75,6 @@ services:
         - pg_isready
         - -d
         - api
-    ports:
-      - 5432:5432
     restart: on-failure
     volumes:
       - ./services/api/test/data/entities.sql:/var/lib/postgresql/test/data/entities.sql:ro
