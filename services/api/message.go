@@ -1,18 +1,18 @@
-package api
+package saltyChat
 
 import (
 	"time"
 
-	"github.com/Autherain/go_cyber/internal/pagination"
+	"github.com/Autherain/saltyChat/internal/utils/pagination"
 	"github.com/gofrs/uuid"
 )
 
 type Message struct {
-	ID                uuid.UUID
-	RoomID            uuid.UUID
-	encrypted_content byte
-	nonce             byte
-	timestamp         time.Time
+	ID               uuid.UUID
+	RoomID           uuid.UUID
+	EncryptedContent byte
+	Nonce            byte
+	Timestamp        time.Time
 }
 
 type MessagesSelector struct {

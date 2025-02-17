@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "SaltyChat",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}

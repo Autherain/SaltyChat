@@ -2,18 +2,19 @@ package server
 
 import (
 	"context"
+	"log/slog"
 	"sync"
 	"time"
 
-	"github.com/Autherain/go_cyber/internal/health"
-	"github.com/Autherain/go_cyber/internal/logger"
-	"github.com/Autherain/go_cyber/store"
+	"github.com/Autherain/saltyChat/internal/health"
+	"github.com/Autherain/saltyChat/internal/utils/logger"
+	"github.com/Autherain/saltyChat/pkg/store"
 	"github.com/jirenius/go-res"
 	"github.com/nats-io/nats.go"
 )
 
 type Server struct {
-	service         *res.Service
+	Service         *res.Service
 	log             *logger.Logger
 	healthChecker   *health.HealthChecker
 	wg              sync.WaitGroup
@@ -32,11 +33,11 @@ func New(options ...Option) *Server {
 		option(s)
 	}
 
-	if s.service == nil {
+	if s.Service == nil {
 		panic("server requires a RES service")
 	}
 
-	s.addResourceHandlers()
+	s.addRESHandlers()
 
 	if s.log == nil {
 		s.log = logger.NewDefault()
@@ -48,7 +49,7 @@ func New(options ...Option) *Server {
 // WithService sets the RES service
 func WithService(service *res.Service) Option {
 	return func(s *Server) {
-		s.service = service
+		s.Service = service
 	}
 }
 
@@ -93,8 +94,8 @@ func (s *Server) Start(ctx context.Context, natsConn *nats.Conn) error {
 	s.wg.Add(1)
 	go func() {
 		defer s.wg.Done()
-		if err := s.service.Serve(natsConn); err != nil {
-			s.log.Error("Service error", "error", err)
+		if err := s.Service.Serve(natsConn); err != nil {
+			s.log.Error("Service error", slog.Any("error", err))
 			errChan <- err
 		}
 	}()
@@ -107,7 +108,7 @@ func (s *Server) startHealthChecker(errChan chan error) {
 	go func() {
 		defer s.wg.Done()
 		if err := s.healthChecker.Start(); err != nil {
-			s.log.Error("Health checker error", "error", err)
+			s.log.Error("Health checker error", slog.Any("error", err))
 			errChan <- err
 		}
 	}()
@@ -131,8 +132,8 @@ func (s *Server) shutdown() error {
 		s.healthChecker.Stop()
 	}
 
-	if err := s.service.Shutdown(); err != nil {
-		s.log.Error("Error stopping RES service", "error", err)
+	if err := s.Service.Shutdown(); err != nil {
+		s.log.Error("Error stopping RES service", slog.Any("error", err))
 	}
 
 	done := make(chan struct{})
@@ -151,19 +152,6 @@ func (s *Server) shutdown() error {
 	}
 }
 
-func (s *Server) addResourceHandlers() {
-	// Add your resource handlers here
-	s.service.Handle(
-		"api.>",
-		s.handleAPIRequest(),
-	)
-}
-
-func (s *Server) handleAPIRequest() res.Option {
-	return res.GetModel(func(r res.ModelRequest) {
-		r.Model(map[string]interface{}{
-			"message": "Hello from API",
-			"time":    time.Now().Format(time.RFC3339),
-		})
-	})
+func (s *Server) addRESHandlers() {
+	s.registerRoomRoutes()
 }

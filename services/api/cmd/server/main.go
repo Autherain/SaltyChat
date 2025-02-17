@@ -7,23 +7,23 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/Autherain/go_cyber/environment"
-	"github.com/Autherain/go_cyber/internal/health"
-	"github.com/Autherain/go_cyber/internal/logger"
-	"github.com/Autherain/go_cyber/pkg/server"
-	"github.com/Autherain/go_cyber/store"
+	"github.com/Autherain/saltyChat/environment"
+	"github.com/Autherain/saltyChat/internal/health"
+	"github.com/Autherain/saltyChat/internal/utils/logger"
+	"github.com/Autherain/saltyChat/pkg/server"
+	"github.com/Autherain/saltyChat/pkg/store"
 	"github.com/jirenius/go-res"
 
 	_ "github.com/lib/pq"
 )
 
-const serviceName = "api"
+const serviceName = "saltyChat"
 
 func main() {
 	// Parse environment variables
 	variables := environment.Parse()
 
-	// Initialize logger
+	// Initialize logger with the adapter for resgate
 	log := logger.NewLogger(logger.Config{
 		Format:    variables.LogFormat,
 		Level:     variables.LogLevel,
@@ -37,11 +37,12 @@ func main() {
 
 	// Initialize service first
 	service := res.NewService(serviceName)
-	service.SetLogger(log)
+	// Use the Adapter instead of the logger directly
+	service.SetLogger(log.Adapter)
 	service.SetInChannelSize(variables.ServiceInChannelSize)
 	service.SetWorkerCount(variables.ServiceWorkerCount)
 
-	// Initialize health checker
+	// Rest of your code remains the same
 	healthChecker := health.New(
 		natsConn,
 		health.NewVersionInfo(variables.Env),
@@ -58,7 +59,7 @@ func main() {
 	// Create server with all dependencies
 	srv := server.New(
 		server.WithService(service),
-		server.WithLogger(log),
+		server.WithLogger(log), // This is fine as is since server presumably uses the full logger
 		server.WithHealthChecker(healthChecker),
 		server.WithShutdownTimeout(variables.ShutdownTimeout),
 		server.WithStore(store),
@@ -79,7 +80,7 @@ func main() {
 
 	// Start server
 	if err := srv.Start(ctx, natsConn); err != nil {
-		log.Error("Server error", "error", err)
+		log.Error("Server error", slog.Any("error", err))
 		os.Exit(1)
 	}
 }

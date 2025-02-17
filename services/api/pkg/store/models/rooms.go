@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/friendsofgo/errors"
-	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -25,9 +24,9 @@ import (
 // Room is an object representing the database table.
 type Room struct {
 	ID           string    `boil:"id" json:"id" toml:"id" yaml:"id"`
-	CreatedAt    null.Time `boil:"created_at" json:"created_at,omitempty" toml:"created_at" yaml:"created_at,omitempty"`
-	LastActivity null.Time `boil:"last_activity" json:"last_activity,omitempty" toml:"last_activity" yaml:"last_activity,omitempty"`
-	IsActive     null.Bool `boil:"is_active" json:"is_active,omitempty" toml:"is_active" yaml:"is_active,omitempty"`
+	CreatedAt    time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	LastActivity time.Time `boil:"last_activity" json:"last_activity" toml:"last_activity" yaml:"last_activity"`
+	IsActive     bool      `boil:"is_active" json:"is_active" toml:"is_active" yaml:"is_active"`
 
 	R *roomR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L roomL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -59,40 +58,25 @@ var RoomTableColumns = struct {
 
 // Generated where
 
-type whereHelpernull_Bool struct{ field string }
+type whereHelperbool struct{ field string }
 
-func (w whereHelpernull_Bool) EQ(x null.Bool) qm.QueryMod {
-	return qmhelper.WhereNullEQ(w.field, false, x)
-}
-func (w whereHelpernull_Bool) NEQ(x null.Bool) qm.QueryMod {
-	return qmhelper.WhereNullEQ(w.field, true, x)
-}
-func (w whereHelpernull_Bool) LT(x null.Bool) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.LT, x)
-}
-func (w whereHelpernull_Bool) LTE(x null.Bool) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.LTE, x)
-}
-func (w whereHelpernull_Bool) GT(x null.Bool) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.GT, x)
-}
-func (w whereHelpernull_Bool) GTE(x null.Bool) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.GTE, x)
-}
-
-func (w whereHelpernull_Bool) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
-func (w whereHelpernull_Bool) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
+func (w whereHelperbool) EQ(x bool) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.EQ, x) }
+func (w whereHelperbool) NEQ(x bool) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.NEQ, x) }
+func (w whereHelperbool) LT(x bool) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.LT, x) }
+func (w whereHelperbool) LTE(x bool) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.LTE, x) }
+func (w whereHelperbool) GT(x bool) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.GT, x) }
+func (w whereHelperbool) GTE(x bool) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.GTE, x) }
 
 var RoomWhere = struct {
 	ID           whereHelperstring
-	CreatedAt    whereHelpernull_Time
-	LastActivity whereHelpernull_Time
-	IsActive     whereHelpernull_Bool
+	CreatedAt    whereHelpertime_Time
+	LastActivity whereHelpertime_Time
+	IsActive     whereHelperbool
 }{
 	ID:           whereHelperstring{field: "\"rooms\".\"id\""},
-	CreatedAt:    whereHelpernull_Time{field: "\"rooms\".\"created_at\""},
-	LastActivity: whereHelpernull_Time{field: "\"rooms\".\"last_activity\""},
-	IsActive:     whereHelpernull_Bool{field: "\"rooms\".\"is_active\""},
+	CreatedAt:    whereHelpertime_Time{field: "\"rooms\".\"created_at\""},
+	LastActivity: whereHelpertime_Time{field: "\"rooms\".\"last_activity\""},
+	IsActive:     whereHelperbool{field: "\"rooms\".\"is_active\""},
 }
 
 // RoomRels is where relationship names are stored.
@@ -667,8 +651,8 @@ func (o *Room) Insert(ctx context.Context, exec boil.ContextExecutor, columns bo
 	if !boil.TimestampsAreSkipped(ctx) {
 		currTime := time.Now().In(boil.GetLocation())
 
-		if queries.MustTime(o.CreatedAt).IsZero() {
-			queries.SetScanner(&o.CreatedAt, currTime)
+		if o.CreatedAt.IsZero() {
+			o.CreatedAt = currTime
 		}
 	}
 
@@ -879,8 +863,8 @@ func (o *Room) Upsert(ctx context.Context, exec boil.ContextExecutor, updateOnCo
 	if !boil.TimestampsAreSkipped(ctx) {
 		currTime := time.Now().In(boil.GetLocation())
 
-		if queries.MustTime(o.CreatedAt).IsZero() {
-			queries.SetScanner(&o.CreatedAt, currTime)
+		if o.CreatedAt.IsZero() {
+			o.CreatedAt = currTime
 		}
 	}
 

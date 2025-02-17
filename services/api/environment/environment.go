@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/Autherain/go_cyber/internal/logger"
+	"github.com/Autherain/saltyChat/internal/utils/logger"
 	"github.com/caarlos0/env/v8"
 	"github.com/joho/godotenv"
 	"github.com/nats-io/nats.go"
@@ -26,7 +26,7 @@ type Variables struct {
 
 	// Logger Configuration
 	LogFormat logger.Format   `env:"APP_LOG_FORMAT" envDefault:"json"`
-	LogLevel  logger.LogLevel `env:"APP_LOG_LEVEL" envDefault:"info"`
+	LogLevel  logger.LogLevel `env:"APP_LOG_LEVEL" envDefault:"trace"`
 	LogSource bool            `env:"APP_LOG_SOURCE" envDefault:"false"`
 
 	// Health Check Configuration

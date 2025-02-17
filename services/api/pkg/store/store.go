@@ -3,7 +3,7 @@ package store
 import (
 	"database/sql"
 
-	api "github.com/Autherain/go_cyber"
+	api "github.com/Autherain/saltyChat"
 )
 
 type Store struct {

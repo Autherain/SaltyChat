@@ -1,6 +1,6 @@
 package store
 
-import api "github.com/Autherain/go_cyber"
+import api "github.com/Autherain/saltyChat"
 
 type messageStore struct{ baseStore *Store }
 
