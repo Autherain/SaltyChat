@@ -1,0 +1,117 @@
+# Run configuration for golangci-lint
+run:
+  concurrency: 4 # Number of concurrent linters to run
+  timeout: 5m # Timeout for running linters
+  tests: true # Include test files in analysis
+  issues-exit-code: 1 # Exit code when issues are found
+
+# Individual linter settings
+linters-settings:
+  # Revive is a fast, configurable, extensible, flexible, and beautiful linter for Go
+  revive:
+    severity: warning
+    rules:
+      - name: cyclomatic # Checks function complexity
+        severity: warning
+        arguments: [8] # Max complexity of 8
+      - name: argument-limit # Limits function parameters
+        severity: warning
+        arguments: [6] # Max 6 parameters
+      - name: cognitive-complexity # Measures cognitive complexity
+        severity: warning
+        arguments: [7] # Max complexity of 7
+      - name: function-result-limit # Limits function return values
+        severity: warning
+        arguments: [3] # Max 3 return values
+      - name: max-control-nesting # Limits nesting of control structures
+        severity: warning
+        arguments: [3] # Max nesting of 3
+      - name: atomic # Checks for proper use of sync/atomic
+        severity: warning
+      - name: bare-return # Checks for bare returns
+        severity: warning
+      - name: context-as-argument # Ensures context.Context is first parameter
+        severity: warning
+      - name: error-strings # Checks error string conventions
+        severity: warning
+      - name: errorf # Checks error formatting
+        severity: warning
+      - name: indent-error-flow # Prevents deep error nesting
+        severity: warning
+      - name: range-val-in-closure # Checks for range variables in closures
+        severity: warning
+      - name: receiver-naming # Checks receiver name conventions
+        severity: warning
+      - name: string-format # Checks string formatting
+        severity: warning
+      - name: unhandled-error # Ensures errors are handled
+        severity: warning
+      - name: var-naming # Checks variable naming conventions
+        severity: warning
+
+  # Gocritic is a complex linter with many checks
+  gocritic:
+    enabled-tags:
+      - diagnostic # Finds code that might be problematic
+      - experimental # Experimental checks
+      - performance # Performance-related checks
+    disabled-checks:
+      - dupImport # Disable duplicate import checking
+      - ifElseChain # Disable if-else chain checking
+      - octalLiteral # Disable octal literal checking
+
+# Enable specific linters
+linters:
+  enable:
+    # Core linters
+    - errcheck # Checks for unchecked errors
+    - govet # Reports suspicious constructs
+    - ineffassign # Detects ineffective assignments
+    - staticcheck # Applies a ton of static analysis checks
+    - revive # Drop-in replacement for golint
+    - whitespace # Tool for detecting whitespace issues
+
+    # Code complexity linters
+    - gocritic # Provides many different checks
+
+    # Security linters
+    - gosec # Inspects source code for security problems
+
+    # Code style linters
+    - goimports # Fixes imports formatting
+    - goconst # Finds repeated strings that could be constants
+
+    # Performance linters
+    - bodyclose # Checks if HTTP response bodies are closed
+    - prealloc # Finds slice preallocation opportunities
+
+    # Code duplication and maintenance
+    - gomodguard # Checks for disallowed modules
+    - misspell # Finds commonly misspelled words
+
+    # Advanced error checking
+    - wrapcheck # Ensures errors are wrapped with additional context
+
+    # Testing-specific linters
+    - tparallel # Detects inappropriate usage of t.Parallel()
+    - thelper # Detects golang test helpers without t.Helper()
+    - paralleltest # Detects missing usage of t.Parallel()
+
+    # Additional safety checks
+    - tagliatelle # Checks struct tag naming conventions
+    - nilnil # Checks that there's no simultaneous return of nil error and nil value
+
+# Issue configuration
+issues:
+  uniq-by-line: true # Only one issue per line
+  exclude-rules: # Rules for excluding issues
+    - path: _test\.go # For test files
+      linters:
+        - dupl # Don't check for duplicates in tests
+        - funlen # Don't check function length in tests
+        - gosec # Don't check security in tests
+
+# Severity configuration
+severity:
+  default-severity: warning # Default severity level
+  case-sensitive: true # Case-sensitive severity
