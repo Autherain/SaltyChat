@@ -1,0 +1,8 @@
+BEGIN;
+ALTER TABLE rooms 
+   ALTER COLUMN created_at SET NOT NULL,
+   ALTER COLUMN last_activity SET NOT NULL;
+
+ALTER TABLE messages
+   ALTER COLUMN timestamp SET NOT NULL;
+COMMIT;

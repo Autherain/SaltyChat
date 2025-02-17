@@ -1,0 +1,6 @@
+BEGIN;
+
+ALTER TABLE rooms
+   ALTER COLUMN is_active DROP NOT NULL;
+
+COMMIT;
