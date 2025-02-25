@@ -19,7 +19,6 @@ func (p *RoomParams) Map() *saltyChat.Room {
 		ID:           uuid.New(),
 		CreatedAt:    time.Now(),
 		LastActivity: time.Now(),
-		IsActive:     p.IsActive,
 	}
 }
 

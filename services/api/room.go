@@ -47,8 +47,8 @@ type RoomsSelector struct {
 }
 
 type RoomManager interface {
-	Read(selector *RoomSelector) (*Room, error)
 	ReadAll(selector *RoomsSelector) ([]*Room, uuid.UUID, error)
 	Create(selector *Room) error
 	Delete(selector *RoomSelector) error
+	Read(selector *RoomSelector) (*Room, error)
 }

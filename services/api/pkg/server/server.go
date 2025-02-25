@@ -4,12 +4,14 @@ import (
 	"context"
 	"log/slog"
 	"sync"
+	"testing"
 	"time"
 
 	"github.com/Autherain/saltyChat/internal/health"
 	"github.com/Autherain/saltyChat/internal/utils/logger"
 	"github.com/Autherain/saltyChat/pkg/store"
 	"github.com/jirenius/go-res"
+	"github.com/jirenius/go-res/restest"
 	"github.com/nats-io/nats.go"
 )
 
@@ -154,4 +156,8 @@ func (s *Server) shutdown() error {
 
 func (s *Server) addRESHandlers() {
 	s.registerRoomRoutes()
+}
+
+func newTestSession(t *testing.T, service *res.Service) *restest.Session {
+	return restest.NewSession(t, service, func(c *restest.SessionConfig) { c.TimeoutDuration = 10 * time.Second })
 }

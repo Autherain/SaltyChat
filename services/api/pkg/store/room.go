@@ -72,7 +72,7 @@ func (s *roomStore) ReadAll(selector *api.RoomsSelector) ([]*api.Room, uuid.UUID
 
 	const limit = 100
 	if selector.LastKey != uuid.Nil {
-		result = append(result, models.MessageWhere.ID.GT(string(selector.LastKey.String())))
+		models.RoomWhere.ID.GT(selector.LastKey.String())
 	}
 
 	result = append(result, qm.Limit(int(pagination.NewLimit(selector.Size).Bound(limit))))

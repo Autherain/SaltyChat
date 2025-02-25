@@ -10,7 +10,10 @@ import (
 	"github.com/jirenius/go-res"
 )
 
-const RessourceRooms = "rooms"
+const (
+	RessourceRooms = "rooms"
+	RoomIDPram     = "$roomID"
+)
 
 func (s *Server) registerRoomRoutes() {
 	s.Service.Handle(RessourceRooms,
@@ -38,11 +41,6 @@ func (s *Server) handleCreateRoom() res.Option {
 		if err := s.sendRoomsQueryEvent(); err != nil {
 			errors.LogAndWriteRESError(s.log, request, err)
 		}
-	})
-}
-
-func (s *Server) handleDeleteRoom() res.Option {
-	return res.Call("delete", func(request res.CallRequest) {
 	})
 }
 
