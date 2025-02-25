@@ -159,5 +159,6 @@ func (s *Server) addRESHandlers() {
 }
 
 func newTestSession(t *testing.T, service *res.Service) *restest.Session {
+	t.Helper()
 	return restest.NewSession(t, service, func(c *restest.SessionConfig) { c.TimeoutDuration = 10 * time.Second })
 }

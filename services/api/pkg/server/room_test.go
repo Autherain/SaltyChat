@@ -14,6 +14,7 @@ import (
 )
 
 func TestHandleCreateRoom(t *testing.T) {
+	t.Parallel()
 	roomID := uuid.Nil
 
 	params := &models.RoomParams{}
@@ -43,8 +44,6 @@ func TestHandleCreateRoom(t *testing.T) {
 type roomsMock struct {
 	createFunc  func(room *saltyChat.Room) error
 	readAllFunc func(selector *saltyChat.RoomsSelector) ([]*saltyChat.Room, uuid.UUID, error)
-
-	// ReadAll(selector *RoomsSelector) ([]*Room, uuid.UUID, error)
 }
 
 func (m *roomsMock) Create(selector *saltyChat.Room) error {
@@ -60,5 +59,5 @@ func (m *roomsMock) Delete(selector *saltyChat.RoomSelector) error {
 }
 
 func (m *roomsMock) Read(selector *saltyChat.RoomSelector) (*saltyChat.Room, error) {
-	return nil, nil
+	return &saltyChat.Room{}, nil
 }

@@ -93,7 +93,7 @@ func (r *roomsResource) parseSelector() (*saltyChat.RoomsSelector, error) {
 
 	result := &saltyChat.RoomsSelector{}
 
-	keysetSelector, err := pagination.ParseKeysetSelector[uuid.UUID](query, func(key string) (uuid.UUID, error) {
+	keysetSelector, err := pagination.ParseKeysetSelector(query, func(key string) (uuid.UUID, error) {
 		parsedKey, err := uuid.Parse(key)
 		if err != nil {
 			return uuid.Nil, err

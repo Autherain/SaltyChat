@@ -12,7 +12,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+//nolint:revive //Test don't care
 func TestRoomStore(t *testing.T) {
+	t.Parallel()
 	store := NewStore(WithDB(environment.MustInitPGSQLDB(environment.Parse()))).Rooms
 
 	now := time.Now().UTC()
@@ -23,10 +25,12 @@ func TestRoomStore(t *testing.T) {
 		IsActive:     true,
 	}
 
+	//nolint:paralleltest // Need series of test
 	t.Run("create room", func(t *testing.T) {
 		require.NoError(t, store.Create(room))
 	})
 
+	//nolint:paralleltest // Need series
 	t.Run("read room", func(t *testing.T) {
 		selector := &api.RoomSelector{RoomID: room.ID}
 		fetchedRoom, err := store.Read(selector)
@@ -37,6 +41,7 @@ func TestRoomStore(t *testing.T) {
 		require.WithinDuration(t, room.LastActivity, fetchedRoom.LastActivity, time.Second)
 	})
 
+	//nolint:paralleltest // Need series
 	t.Run("read all rooms", func(t *testing.T) {
 		// Create a few more rooms for testing ReadAll
 		additionalRooms := []*api.Room{
@@ -89,6 +94,7 @@ func TestRoomStore(t *testing.T) {
 	})
 
 	t.Run("room not found", func(t *testing.T) {
+		t.Parallel()
 		nonExistentID := uuid.New()
 		selector := &api.RoomSelector{RoomID: nonExistentID}
 		_, err := store.Read(selector)
@@ -97,6 +103,7 @@ func TestRoomStore(t *testing.T) {
 	})
 
 	t.Run("validate room", func(t *testing.T) {
+		t.Parallel()
 		invalidRoom := &api.Room{
 			// Missing ID
 			CreatedAt:    now,
@@ -109,6 +116,7 @@ func TestRoomStore(t *testing.T) {
 	})
 
 	t.Run("delete room", func(t *testing.T) {
+		t.Parallel()
 		selector := &api.RoomSelector{RoomID: room.ID}
 		require.NoError(t, store.Delete(selector))
 

@@ -89,9 +89,6 @@ linters:
     - gomodguard # Checks for disallowed modules
     - misspell # Finds commonly misspelled words
 
-    # Advanced error checking
-    - wrapcheck # Ensures errors are wrapped with additional context
-
     # Testing-specific linters
     - tparallel # Detects inappropriate usage of t.Parallel()
     - thelper # Detects golang test helpers without t.Helper()

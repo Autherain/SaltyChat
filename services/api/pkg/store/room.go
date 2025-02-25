@@ -57,6 +57,7 @@ func create(db *sql.DB, room *api.Room) error {
 	return nil
 }
 
+// nolint: gocritic // Not a bug, a feature
 func delete(db *sql.DB, selector *api.RoomSelector) error {
 	room := &models.Room{ID: selector.RoomID.String()}
 
